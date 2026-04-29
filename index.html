@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>请假管理</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "WenQuanYi Micro Hei", sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* 顶部导航栏 */
+        .header {
+            background: #fff;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 12px;
+            position: relative;
+            border-bottom: 1px solid #eee;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            width: 80px;
+        }
+
+        .header-left svg {
+            width: 24px;
+            height: 24px;
+            color: #333;
+        }
+
+        .header-title {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 17px;
+            font-weight: 500;
+            color: #333;
+            white-space: nowrap;
+        }
+
+        .header-right {
+            width: 80px;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .header-right svg {
+            width: 24px;
+            height: 24px;
+            color: #333;
+        }
+
+        /* 面包屑导航 */
+        .breadcrumb {
+            background: #f0f4f8;
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            color: #666;
+        }
+
+        .breadcrumb svg {
+            width: 14px;
+            height: 14px;
+            color: #4a90d9;
+        }
+
+        .breadcrumb a {
+            color: #4a90d9;
+            text-decoration: none;
+        }
+
+        .breadcrumb-separator {
+            color: #999;
+            font-size: 12px;
+        }
+
+        /* 用户信息区域 */
+        .user-section {
+            background: #fff;
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 8px;
+        }
+
+        .avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: #e8e8e8;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .avatar svg {
+            width: 32px;
+            height: 32px;
+            color: #bbb;
+        }
+
+        /* 请假信息区域 */
+        .info-section {
+            background: #fff;
+            padding: 16px;
+            margin-bottom: 8px;
+            position: relative;
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .section-title::before {
+            content: '';
+            width: 4px;
+            height: 18px;
+            background: #4a90d9;
+            border-radius: 2px;
+        }
+
+        .info-row {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 10px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .info-label {
+            color: #666;
+            min-width: 90px;
+            flex-shrink: 0;
+        }
+
+        .info-value {
+            color: #333;
+            flex: 1;
+            word-break: break-all;
+        }
+
+        .status-pass {
+            color: #4a90d9;
+            font-weight: 500;
+            cursor: pointer;
+            display: inline-block;
+        }
+
+        /* 已通过印章 - 80%缩放，旋转17度 */
+        .stamp {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            width: 68px;
+            height: 68px;
+            opacity: 0.8;
+            pointer-events: none;
+        }
+
+        .stamp svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* 办理进度 */
+        .progress-section {
+            background: #fff;
+            padding: 16px;
+        }
+
+        .timeline {
+            position: relative;
+            padding-left: 28px;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 10px;
+            top: 8px;
+            bottom: 30px;
+            width: 2px;
+            background: #e0e0e0;
+        }
+
+        .timeline-item {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .timeline-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .timeline-dot {
+            position: absolute;
+            left: -28px;
+            top: 2px;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #fff;
+            border: 2px solid #4a90d9;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1;
+        }
+
+        .timeline-dot.completed {
+            background: #4a90d9;
+            border-color: #4a90d9;
+        }
+
+        .timeline-dot.completed::after {
+            content: '';
+            width: 8px;
+            height: 5px;
+            border-left: 2px solid #fff;
+            border-bottom: 2px solid #fff;
+            transform: rotate(-45deg);
+            margin-top: -2px;
+        }
+
+        .timeline-dot.pending {
+            border-color: #4a90d9;
+        }
+
+        .timeline-dot.pending::after {
+            content: '';
+            width: 8px;
+            height: 8px;
+            background: #4a90d9;
+            border-radius: 50%;
+        }
+
+        .timeline-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+
+        .timeline-title {
+            font-size: 15px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .timeline-status {
+            font-size: 14px;
+            color: #52c41a;
+            margin-left: 8px;
+        }
+
+        .timeline-time {
+            font-size: 13px;
+            color: #999;
+        }
+
+        .timeline-detail {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+            color: #666;
+            padding-left: 4px;
+        }
+
+        .timeline-name {
+            color: #333;
+        }
+
+        /* 底部空白 */
+        .bottom-spacer {
+            height: 400px;
+            background: #f5f5f5;
+        }
+
+        /* 编辑弹窗 */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: #fff;
+            border-radius: 12px;
+            width: 100%;
+            max-width: 360px;
+            overflow: hidden;
+            animation: modalSlideUp 0.3s ease;
+        }
+
+        @keyframes modalSlideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-header {
+            padding: 20px 20px 0;
+            font-size: 17px;
+            font-weight: 600;
+            color: #333;
+            text-align: center;
+        }
+
+        .modal-body {
+            padding: 16px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .modal-row {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .modal-label {
+            font-size: 13px;
+            color: #666;
+        }
+
+        .modal-input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 15px;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .modal-input:focus {
+            border-color: #4a90d9;
+        }
+
+        .modal-footer {
+            display: flex;
+            border-top: 1px solid #eee;
+        }
+
+        .modal-btn {
+            flex: 1;
+            padding: 14px;
+            border: none;
+            background: none;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.2s;
+            font-family: inherit;
+        }
+
+        .modal-btn:hover {
+            background: #f5f5f5;
+        }
+
+        .modal-btn.cancel {
+            color: #666;
+            border-right: 1px solid #eee;
+        }
+
+        .modal-btn.confirm {
+            color: #4a90d9;
+            font-weight: 500;
+        }
+
+        /* 提示 toast */
+        .toast {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.75);
+            color: #fff;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            z-index: 2000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        .toast.show {
+            opacity: 1;
+        }
+    </style>
+<base target="_blank">
+</head>
+<body>
+    <!-- 顶部导航 -->
+    <div class="header">
+        <div class="header-left">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M19 12H5M12 19l-7-7 7-7"/>
+            </svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+        </div>
+        <div class="header-title">请假管理</div>
+        <div class="header-right">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+                <circle cx="12" cy="5" r="2"/>
+                <circle cx="12" cy="12" r="2"/>
+                <circle cx="12" cy="19" r="2"/>
+            </svg>
+        </div>
+    </div>
+
+    <!-- 面包屑 -->
+    <div class="breadcrumb">
+        <svg viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+        </svg>
+        <a href="#">首页</a>
+        <span class="breadcrumb-separator">&gt;</span>
+        <span>请假管理</span>
+    </div>
+
+    <!-- 用户信息 -->
+    <div class="user-section">
+        <div class="avatar">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+            </svg>
+        </div>
+    </div>
+
+    <!-- 请假信息 -->
+    <div class="info-section">
+        <!-- 已通过印章 - 80%缩放，旋转17度 -->
+        <div class="stamp">
+            <svg viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="120" cy="120" r="95" stroke="#72b8a6" stroke-width="2" fill="none" />
+                <circle cx="120" cy="120" r="80" stroke="#72b8a6" stroke-width="2" stroke-dasharray="4 4" fill="none" />
+                <rect x="10" y="90" width="220" height="60" rx="8" 
+                      fill="#ffffff" stroke="#72b8a6" stroke-width="2"
+                      transform="rotate(17, 120, 120)" />
+                <rect x="20" y="97" width="200" height="46" rx="6" 
+                      fill="none" stroke="#72b8a6" stroke-width="1.5" stroke-dasharray="3 3"
+                      transform="rotate(17, 120, 120)" />
+                <text x="120" y="135" text-anchor="middle" 
+                      font-size="48" font-family="SimSun, STSong, serif" fill="#72b8a6"
+                      transform="rotate(17, 120, 120)">已通过</text>
+            </svg>
+        </div>
+
+        <div class="section-title">请假信息</div>
+
+        <div class="info-row">
+            <span class="info-label">请假类型：</span>
+            <span class="info-value" id="displayLeaveType">节假日及寒暑假请假</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">请假去向：</span>
+            <span class="info-value"></span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">详细地址：</span>
+            <span class="info-value"></span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">开始时间：</span>
+            <span class="info-value" id="displayStartTime">2026-04-26 07:22:00</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">结束时间：</span>
+            <span class="info-value" id="displayEndTime">2026-04-26 17:22:00</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">统计时长：</span>
+            <span class="info-value">天小时分钟</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">紧急联系人：</span>
+            <span class="info-value"></span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">紧急联系人电话：</span>
+            <span class="info-value"></span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">请假理由：</span>
+            <span class="info-value" id="displayReason">周末外出</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">请假状态：</span>
+            <span class="info-value status-pass" id="editTrigger">审核通过</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">销假状态：</span>
+            <span class="info-value"></span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">请假附件：</span>
+            <span class="info-value"></span>
+        </div>
+    </div>
+
+    <!-- 办理进度 -->
+    <div class="progress-section">
+        <div class="section-title">办理进度</div>
+        <div class="timeline">
+            <div class="timeline-item">
+                <div class="timeline-dot completed"></div>
+                <div class="timeline-header">
+                    <div>
+                        <span class="timeline-title">申请</span>
+                        <span class="timeline-status">申请</span>
+                    </div>
+                    <span class="timeline-time" id="displayApplyTime">2026-04-24 15:24</span>
+                </div>
+                <div class="timeline-detail">
+                    <span class="timeline-name" id="displayApplyName">詹泽凯</span>
+                </div>
+            </div>
+            <div class="timeline-item">
+                <div class="timeline-dot completed"></div>
+                <div class="timeline-header">
+                    <div>
+                        <span class="timeline-title">辅导员审核</span>
+                        <span class="timeline-status">审核通过</span>
+                    </div>
+                    <span class="timeline-time" id="displayAuditTime">2026-04-24 15:28</span>
+                </div>
+                <div class="timeline-detail">
+                    <span class="timeline-name" id="displayAdvisorName">耿茸</span>
+                </div>
+            </div>
+            <div class="timeline-item">
+                <div class="timeline-dot pending"></div>
+                <div class="timeline-header">
+                    <div>
+                        <span class="timeline-title">结束</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 底部空白 -->
+    <div class="bottom-spacer"></div>
+
+    <!-- 编辑弹窗 -->
+    <div class="modal-overlay" id="editModal">
+        <div class="modal">
+            <div class="modal-header">编辑请假信息</div>
+            <div class="modal-body">
+                <div class="modal-row">
+                    <span class="modal-label">请假类型</span>
+                    <input type="text" class="modal-input" id="inputLeaveType" placeholder="请输入请假类型">
+                </div>
+                <div class="modal-row">
+                    <span class="modal-label">姓名</span>
+                    <input type="text" class="modal-input" id="inputUserName" placeholder="请输入姓名">
+                </div>
+                <div class="modal-row">
+                    <span class="modal-label">开始时间</span>
+                    <input type="text" class="modal-input" id="inputStartTime" placeholder="格式：2026-04-26 07:22:00">
+                </div>
+                <div class="modal-row">
+                    <span class="modal-label">结束时间</span>
+                    <input type="text" class="modal-input" id="inputEndTime" placeholder="格式：2026-04-26 17:22:00">
+                </div>
+                <div class="modal-row">
+                    <span class="modal-label">请假理由</span>
+                    <input type="text" class="modal-input" id="inputReason" placeholder="请输入请假理由">
+                </div>
+                <div class="modal-row">
+                    <span class="modal-label">辅导员姓名</span>
+                    <input type="text" class="modal-input" id="inputAdvisorName" placeholder="请输入辅导员姓名">
+                </div>
+                <div class="modal-row">
+                    <span class="modal-label">申请时间</span>
+                    <input type="text" class="modal-input" id="inputApplyTime" placeholder="格式：2026-04-24 15:24">
+                </div>
+                <div class="modal-row">
+                    <span class="modal-label">审核时间</span>
+                    <input type="text" class="modal-input" id="inputAuditTime" placeholder="格式：2026-04-24 15:28">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn cancel" onclick="closeModal()">取消</button>
+                <button class="modal-btn confirm" onclick="saveEdit()">确定</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast 提示 -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // 点击"审核通过"触发编辑
+        document.getElementById('editTrigger').addEventListener('click', function() {
+            document.getElementById('inputLeaveType').value = document.getElementById('displayLeaveType').textContent.trim();
+            document.getElementById('inputUserName').value = document.getElementById('displayApplyName').textContent.trim();
+            document.getElementById('inputStartTime').value = document.getElementById('displayStartTime').textContent.trim();
+            document.getElementById('inputEndTime').value = document.getElementById('displayEndTime').textContent.trim();
+            document.getElementById('inputReason').value = document.getElementById('displayReason').textContent.trim();
+            document.getElementById('inputAdvisorName').value = document.getElementById('displayAdvisorName').textContent.trim();
+            document.getElementById('inputApplyTime').value = document.getElementById('displayApplyTime').textContent.trim();
+            document.getElementById('inputAuditTime').value = document.getElementById('displayAuditTime').textContent.trim();
+
+            document.getElementById('editModal').classList.add('active');
+        });
+
+        // 关闭弹窗
+        function closeModal() {
+            document.getElementById('editModal').classList.remove('active');
+        }
+
+        // 保存编辑
+        function saveEdit() {
+            const leaveType = document.getElementById('inputLeaveType').value.trim();
+            const userName = document.getElementById('inputUserName').value.trim();
+            const startTime = document.getElementById('inputStartTime').value.trim();
+            const endTime = document.getElementById('inputEndTime').value.trim();
+            const reason = document.getElementById('inputReason').value.trim();
+            const advisorName = document.getElementById('inputAdvisorName').value.trim();
+            const applyTime = document.getElementById('inputApplyTime').value.trim();
+            const auditTime = document.getElementById('inputAuditTime').value.trim();
+
+            if (leaveType) document.getElementById('displayLeaveType').textContent = leaveType;
+            if (userName) document.getElementById('displayApplyName').textContent = userName;
+            if (startTime) document.getElementById('displayStartTime').textContent = startTime;
+            if (endTime) document.getElementById('displayEndTime').textContent = endTime;
+            if (reason) document.getElementById('displayReason').textContent = reason;
+            if (advisorName) document.getElementById('displayAdvisorName').textContent = advisorName;
+            if (applyTime) document.getElementById('displayApplyTime').textContent = applyTime;
+            if (auditTime) document.getElementById('displayAuditTime').textContent = auditTime;
+
+            showToast('修改成功');
+            closeModal();
+        }
+
+        // 点击遮罩关闭
+        document.getElementById('editModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+
+        // 回车保存
+        document.querySelectorAll('.modal-input').forEach(input => {
+            input.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    saveEdit();
+                } else if (e.key === 'Escape') {
+                    closeModal();
+                }
+            });
+        });
+
+        // Toast 提示
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 1500);
+        }
+    </script>
+</body>
+</html>
